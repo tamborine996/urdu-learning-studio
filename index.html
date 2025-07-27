@@ -73,7 +73,7 @@
         .urdu-text {
             font-family: 'Noto Nastaliq Urdu', serif;
             font-size: 18px;
-            line-height: 1.8;
+            line-height: 2.2;
             text-align: right;
             direction: rtl;
             background: #f9fafb;
@@ -285,18 +285,21 @@
         /* Translation Popup */
         .translation-popup {
             position: fixed;
-            background: rgba(0, 0, 0, 0.9);
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
             color: white;
-            padding: 15px 20px;
-            border-radius: 12px;
-            font-size: 16px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 15px;
             z-index: 1000;
-            max-width: 280px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            max-width: 250px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
             pointer-events: none;
             opacity: 0;
-            transform: translateY(10px);
+            transform: translateY(8px);
             transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .translation-popup.show {
@@ -310,36 +313,45 @@
             top: 100%;
             left: 50%;
             transform: translateX(-50%);
-            border: 8px solid transparent;
-            border-top-color: rgba(0, 0, 0, 0.9);
+            border: 6px solid transparent;
+            border-top-color: rgba(0, 0, 0, 0.75);
+        }
+
+        .translation-popup.popup-below::after {
+            top: -12px;
+            border-top-color: transparent;
+            border-bottom-color: rgba(0, 0, 0, 0.75);
         }
 
         .popup-word {
             font-family: 'Noto Nastaliq Urdu', serif;
-            font-size: 18px;
-            margin-bottom: 5px;
+            font-size: 16px;
+            margin-bottom: 4px;
             color: #fbbf24;
+            font-weight: 600;
         }
 
         .popup-translation {
-            font-size: 16px;
-            color: #e5e7eb;
+            font-size: 14px;
+            color: #f3f4f6;
+            line-height: 1.3;
         }
 
         .popup-save {
-            background: #10b981;
+            background: rgba(16, 185, 129, 0.9);
             color: white;
             border: none;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 12px;
-            margin-top: 8px;
+            padding: 6px 10px;
+            border-radius: 5px;
+            font-size: 11px;
+            margin-top: 6px;
             cursor: pointer;
             pointer-events: all;
+            transition: background 0.2s;
         }
 
         .popup-save:hover {
-            background: #059669;
+            background: rgba(5, 150, 105, 0.95);
         }
 
         .clear-button {
@@ -481,7 +493,7 @@
             
             .urdu-text {
                 font-size: 16px;
-                line-height: 1.7;
+                line-height: 2.0;
                 padding: 15px;
             }
             
@@ -1207,9 +1219,19 @@
             textElement.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
         }
 
-        // Handle word click (start selection)
+        // Handle word click (start selection or toggle)
         async function handleWord(word, index, event) {
             const cleanWord = word.replace(/[۔،؟!]/g, '');
+            
+            // Check if this word is already selected/highlighted
+            if (event.target.classList.contains('selected') || event.target.classList.contains('active')) {
+                // Toggle off - unhighlight and hide popup
+                event.target.classList.remove('active', 'selected');
+                selectedWords = [];
+                isSelecting = false;
+                hidePopup();
+                return;
+            }
             
             // Clear previous selections
             document.querySelectorAll('.urdu-word').forEach(w => {
@@ -1353,18 +1375,35 @@
             const popup = document.getElementById('translationPopup');
             if (element) {
                 const rect = element.getBoundingClientRect();
-                const popupRect = popup.getBoundingClientRect();
+                const popupWidth = 250; // max-width of popup
+                const popupHeight = 100; // estimated height
                 
-                // Position above the word, centered
-                let left = rect.left + (rect.width / 2) - (280 / 2); // 280 is max-width of popup
-                let top = rect.top - 120; // Position above the word
+                // Smart positioning: try above first, then below if no space
+                let left = rect.left + (rect.width / 2) - (popupWidth / 2);
+                let top = rect.top - popupHeight - 10; // 10px gap above word
                 
-                // Keep popup within screen bounds
-                left = Math.max(10, Math.min(left, window.innerWidth - 290));
-                top = Math.max(10, top);
+                // If popup would be cut off at top, position below instead
+                if (top < 10) {
+                    top = rect.bottom + 10; // Position below word
+                }
+                
+                // Keep popup within screen bounds horizontally
+                left = Math.max(10, Math.min(left, window.innerWidth - popupWidth - 10));
+                
+                // Final bounds check for vertical position
+                top = Math.max(10, Math.min(top, window.innerHeight - popupHeight - 10));
                 
                 popup.style.left = left + 'px';
                 popup.style.top = top + 'px';
+                
+                // Adjust arrow direction based on position
+                if (rect.top - popupHeight - 10 < 10) {
+                    // Popup is below word, point arrow up
+                    popup.classList.add('popup-below');
+                } else {
+                    // Popup is above word, point arrow down
+                    popup.classList.remove('popup-below');
+                }
             }
             
             // Show popup
@@ -1667,6 +1706,16 @@
             event.preventDefault(); // Prevent scrolling
             touchStartTime = Date.now();
             lastTouchTarget = event.target;
+            
+            // Check if this word is already selected/highlighted
+            if (event.target.classList.contains('selected') || event.target.classList.contains('active')) {
+                // Toggle off - unhighlight and hide popup
+                event.target.classList.remove('active', 'selected');
+                selectedWords = [];
+                isSelecting = false;
+                hidePopup();
+                return;
+            }
             
             // Clear previous selections
             document.querySelectorAll('.urdu-word').forEach(w => {
