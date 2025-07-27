@@ -3,9 +3,5 @@
     "api/translate.js": {
       "runtime": "@vercel/node"
     }
-  },
-  "env": {
-    "TRANSLATOR_API_KEY": "@translator-api-key",
-    "TRANSLATOR_API_REGION": "uksouth"
   }
 }
