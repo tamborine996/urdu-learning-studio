@@ -72,8 +72,8 @@
 
         .urdu-text {
             font-family: 'Noto Nastaliq Urdu', serif;
-            font-size: 24px;
-            line-height: 2;
+            font-size: 18px;
+            line-height: 1.6;
             text-align: right;
             direction: rtl;
             background: #f9fafb;
@@ -282,6 +282,66 @@
             font-style: italic;
         }
 
+        /* Translation Popup */
+        .translation-popup {
+            position: fixed;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 12px;
+            font-size: 16px;
+            z-index: 1000;
+            max-width: 280px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            pointer-events: none;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+        }
+
+        .translation-popup.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .translation-popup::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 8px solid transparent;
+            border-top-color: rgba(0, 0, 0, 0.9);
+        }
+
+        .popup-word {
+            font-family: 'Noto Nastaliq Urdu', serif;
+            font-size: 18px;
+            margin-bottom: 5px;
+            color: #fbbf24;
+        }
+
+        .popup-translation {
+            font-size: 16px;
+            color: #e5e7eb;
+        }
+
+        .popup-save {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            margin-top: 8px;
+            cursor: pointer;
+            pointer-events: all;
+        }
+
+        .popup-save:hover {
+            background: #059669;
+        }
+
         .clear-button {
             padding: 10px;
             background: #ef4444;
@@ -420,9 +480,9 @@
             }
             
             .urdu-text {
-                font-size: 20px;
-                line-height: 1.8;
-                padding: 20px;
+                font-size: 16px;
+                line-height: 1.5;
+                padding: 15px;
             }
             
             .sidebar {
@@ -490,6 +550,13 @@
         </div>
     </div>
 
+    <!-- Translation Popup -->
+    <div id="translationPopup" class="translation-popup">
+        <div class="popup-word" id="popupWord"></div>
+        <div class="popup-translation" id="popupTranslation"></div>
+        <button class="popup-save" id="popupSave" onclick="savePopupWord()">Save</button>
+    </div>
+
     <script>
         // Configuration - API calls now go through Vercel function
         // No API key needed on client side
@@ -505,6 +572,9 @@
         let isTranslated = false;
         let translatedPages = new Map();
         let bbcArticleLoaded = false;
+        let currentPopupWord = '';
+        let currentPopupTranslation = '';
+        let popupTimeout = null;
 
         // Stories - split into pages (chunks)
         let stories = [
@@ -1154,16 +1224,16 @@
             try {
                 // Check cache
                 if (translationCache.has(cleanWord)) {
-                    showTranslation(cleanWord, translationCache.get(cleanWord));
+                    showTranslation(cleanWord, translationCache.get(cleanWord), event.target);
                     return;
                 }
                 
                 document.getElementById('translationContent').innerHTML = 'Translating...';
                 const translation = await translateText(cleanWord);
                 translationCache.set(cleanWord, translation);
-                showTranslation(cleanWord, translation);
+                showTranslation(cleanWord, translation, event.target);
             } catch (error) {
-                showTranslation(cleanWord, 'Translation error');
+                showTranslation(cleanWord, 'Translation error', event.target);
             }
         }
 
@@ -1229,7 +1299,8 @@
             
             // Check cache
             if (translationCache.has(cleanPhrase)) {
-                showTranslation(cleanPhrase, translationCache.get(cleanPhrase));
+                const firstElement = words[sortedIndices[0]];
+                showTranslation(cleanPhrase, translationCache.get(cleanPhrase), firstElement);
                 return;
             }
             
@@ -1239,9 +1310,11 @@
             try {
                 const translation = await translateText(cleanPhrase);
                 translationCache.set(cleanPhrase, translation);
-                showTranslation(cleanPhrase, translation);
+                const firstElement = words[sortedIndices[0]];
+                showTranslation(cleanPhrase, translation, firstElement);
             } catch (error) {
-                showTranslation(cleanPhrase, 'Translation error');
+                const firstElement = words[sortedIndices[0]];
+                showTranslation(cleanPhrase, 'Translation error', firstElement);
             }
         }
 
@@ -1263,8 +1336,44 @@
             return data.translation || 'Translation not found';
         }
 
-        // Show translation
-        function showTranslation(word, translation) {
+        // Show translation in popup
+        function showTranslation(word, translation, element) {
+            // Store current translation for save button
+            currentPopupWord = word;
+            currentPopupTranslation = translation;
+            
+            // Update popup content
+            document.getElementById('popupWord').textContent = word;
+            document.getElementById('popupTranslation').textContent = translation;
+            
+            // Position popup near the clicked word
+            const popup = document.getElementById('translationPopup');
+            if (element) {
+                const rect = element.getBoundingClientRect();
+                const popupRect = popup.getBoundingClientRect();
+                
+                // Position above the word, centered
+                let left = rect.left + (rect.width / 2) - (280 / 2); // 280 is max-width of popup
+                let top = rect.top - 120; // Position above the word
+                
+                // Keep popup within screen bounds
+                left = Math.max(10, Math.min(left, window.innerWidth - 290));
+                top = Math.max(10, top);
+                
+                popup.style.left = left + 'px';
+                popup.style.top = top + 'px';
+            }
+            
+            // Show popup
+            popup.classList.add('show');
+            
+            // Auto-hide after 4 seconds
+            clearTimeout(popupTimeout);
+            popupTimeout = setTimeout(() => {
+                hidePopup();
+            }, 4000);
+            
+            // Also update sidebar for reference
             const isPhrase = word.includes(' ');
             const buttonText = isPhrase ? 'Save Phrase' : 'Save Word';
             
@@ -1275,6 +1384,19 @@
                     ${buttonText}
                 </button>
             `;
+        }
+        
+        // Hide popup
+        function hidePopup() {
+            document.getElementById('translationPopup').classList.remove('show');
+        }
+        
+        // Save word from popup
+        function savePopupWord() {
+            if (currentPopupWord && currentPopupTranslation) {
+                saveWord(currentPopupWord, currentPopupTranslation);
+                hidePopup();
+            }
         }
 
         // Save word
@@ -1507,6 +1629,17 @@
         
         // Add global mouse up event listener for drag selection
         document.addEventListener('mouseup', handleMouseUp);
+        
+        // Add click listener to hide popup when clicking elsewhere
+        document.addEventListener('click', function(e) {
+            const popup = document.getElementById('translationPopup');
+            const isPopup = e.target.closest('#translationPopup');
+            const isUrduWord = e.target.classList.contains('urdu-word');
+            
+            if (!isPopup && !isUrduWord && popup.classList.contains('show')) {
+                hidePopup();
+            }
+        });
     </script>
 </body>
 </html>
