@@ -1,0 +1,13 @@
+{
+  "name": "urdu-learning-studio",
+  "version": "1.0.0",
+  "description": "Interactive Urdu learning app with Microsoft Translator API integration",
+  "main": "index.html",
+  "scripts": {
+    "dev": "python -m http.server 8000",
+    "build": "echo 'Static site - no build required'"
+  },
+  "keywords": ["urdu", "learning", "translation", "education"],
+  "author": "MQC20",
+  "license": "MIT"
+}

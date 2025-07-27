@@ -1,0 +1,1448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Urdu Learning Studio</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+        }
+
+        .header {
+            background: #1a1a1a;
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-family: 'Noto Nastaliq Urdu', serif;
+        }
+
+        .header p {
+            opacity: 0.8;
+            font-size: 1.1rem;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            min-height: 600px;
+        }
+
+        .story-panel {
+            padding: 30px;
+            border-right: 1px solid #e5e7eb;
+        }
+
+        .story-selector {
+            margin-bottom: 20px;
+        }
+
+        .story-selector select {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+        }
+
+        .urdu-text {
+            font-family: 'Noto Nastaliq Urdu', serif;
+            font-size: 24px;
+            line-height: 2;
+            text-align: right;
+            direction: rtl;
+            background: #f9fafb;
+            padding: 30px;
+            border-radius: 12px;
+            min-height: 400px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .urdu-word {
+            padding: 2px 4px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .urdu-word:hover {
+            background: #fef3c7;
+        }
+
+        .urdu-word.active {
+            background: #d1fae5;
+            box-shadow: 0 0 0 2px #10b981;
+        }
+
+        .urdu-word.selected {
+            background: #dbeafe;
+            box-shadow: 0 0 0 2px #3b82f6;
+        }
+
+        .sidebar {
+            background: #f9fafb;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .translation-box {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            min-height: 150px;
+        }
+
+        .translation-box h3 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #1f2937;
+        }
+
+        .word-display {
+            font-family: 'Noto Nastaliq Urdu', serif;
+            font-size: 28px;
+            color: #1f2937;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .translation-text {
+            font-size: 18px;
+            color: #374151;
+            text-align: center;
+            margin: 10px 0;
+        }
+
+        .save-button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: transform 0.2s;
+        }
+
+        .save-button:hover {
+            transform: translateY(-2px);
+        }
+
+        .vocabulary-box {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            overflow: hidden;
+        }
+
+        .vocabulary-box h3 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #1f2937;
+        }
+
+        .vocab-list {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .vocab-item {
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .vocab-word {
+            font-family: 'Noto Nastaliq Urdu', serif;
+            font-size: 20px;
+            color: #1f2937;
+        }
+
+        .vocab-translation {
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        .vocab-actions {
+            margin-top: 8px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .jump-button {
+            padding: 4px 8px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .jump-button:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+
+        .urdu-word.saved {
+            border-bottom: 2px solid #d1d5db;
+            border-bottom-style: dotted;
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 180px;
+            background-color: #1f2937;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px;
+            position: absolute;
+            z-index: 1000;
+            top: -45px;
+            left: 50%;
+            margin-left: -90px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 11px;
+            white-space: nowrap;
+        }
+
+        .tooltip .tooltiptext::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #1f2937 transparent transparent transparent;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        @keyframes flash {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); background: #fbbf24; }
+            100% { transform: scale(1); }
+        }
+
+        .empty-vocab {
+            text-align: center;
+            color: #9ca3af;
+            padding: 40px;
+            font-style: italic;
+        }
+
+        .clear-button {
+            padding: 10px;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-weight: 600;
+        }
+
+        .story-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 15px;
+        }
+
+        .page-navigation {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .page-button {
+            padding: 8px 12px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .page-button:hover {
+            background: #2563eb;
+        }
+
+        .page-button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .page-info {
+            font-size: 14px;
+            color: #6b7280;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .translation-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toggle-button {
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .toggle-button:hover {
+            transform: translateY(-1px);
+        }
+
+        .toggle-button.translating {
+            background: #6b7280;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .story-panel {
+                border-right: none;
+                border-bottom: 1px solid #e5e7eb;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>اردو Learning Studio</h1>
+            <p>Click words for instant translation</p>
+        </header>
+
+        <div class="main-content">
+            <div class="story-panel">
+                <div class="story-selector">
+                    <select id="storySelect" onchange="loadStory(this.value)">
+                        <option value="0">The Little Bird • چھوٹا پرندہ</option>
+                        <option value="1">The Garden • باغ</option>
+                        <option value="2">The Friend • دوست</option>
+                        <option value="3">The Cat • بلی</option>
+                    </select>
+                </div>
+
+                <div class="story-controls">
+                    <div class="page-navigation">
+                        <button class="page-button" id="prevPageBtn" onclick="previousPage()" disabled>← Previous</button>
+                        <span class="page-info" id="pageInfo">Page 1 of 1</span>
+                        <button class="page-button" id="nextPageBtn" onclick="nextPage()" disabled>Next →</button>
+                    </div>
+                    
+                    <div class="translation-toggle">
+                        <button class="toggle-button" id="translateToggle" onclick="togglePageTranslation()">
+                            Translate to English
+                        </button>
+                    </div>
+                </div>
+
+                <div class="urdu-text" id="urduText">
+                    Loading...
+                </div>
+            </div>
+
+            <div class="sidebar">
+                <div class="translation-box">
+                    <h3>Translation</h3>
+                    <div id="translationContent">
+                        Click any Urdu word to see its translation
+                    </div>
+                </div>
+
+                <div class="vocabulary-box">
+                    <h3>Saved Vocabulary</h3>
+                    <div class="vocab-list" id="vocabList">
+                        <div class="empty-vocab">No saved words yet</div>
+                    </div>
+                    <button class="clear-button" onclick="clearVocabulary()" style="display: none;" id="clearButton">
+                        Clear All
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration - API calls now go through Vercel function
+        // No API key needed on client side
+        
+        // State
+        let vocabulary = [];
+        let translationCache = new Map();
+        let selectedWords = [];
+        let isSelecting = false;
+        let selectionStart = -1;
+        let currentPage = 0;
+        let pagesPerStory = [];
+        let isTranslated = false;
+        let translatedPages = new Map();
+        let bbcArticleLoaded = false;
+
+        // Stories - split into pages (chunks)
+        let stories = [
+            "ایک چھوٹا پرندہ درخت پر بیٹھا تھا۔ وہ بہت خوش تھا۔ صبح کا وقت تھا اور سورج نکل رہا تھا۔ پرندہ خوبصورت گانا گا رہا تھا۔ اس کی آواز میں خوشی تھی۔ سب لوگ اس کا گانا سن رہے تھے۔",
+            "میرے گھر کے پاس ایک خوبصورت باغ ہے۔ اس میں کئی طرح کے رنگ برنگے پھول ہیں۔ گلاب کے پھول سرخ اور گلابی ہیں۔ چمیلی کے پھول سفید اور خوشبودار ہیں۔ ہر صبح میں باغ میں جاتا ہوں۔",
+            "احمد میرا بہترین دوست ہے۔ وہ بہت اچھا اور مہربان لڑکا ہے۔ ہم روزانہ اسکول جاتے ہیں۔ ہم ساتھ کھیلتے ہیں اور پڑھتے ہیں۔ احمد ہمیشہ میری مدد کرتا ہے۔ میں اس کا بہت شکریہ ادا کرتا ہوں۔",
+            "بلی چھت پر سو رہی تھی۔ اچانک بارش شروع ہوئی۔ بلی جلدی سے گھر کے اندر بھاگی۔ وہ اپنے بچوں کے پاس گئی۔ تمام بلیاں محفوظ تھیں۔ بارش رک گئی اور دھوپ نکل آئی۔"
+        ];
+
+        // Fetch and add BBC Urdu article from local HTML file
+        async function loadBBCArticle() {
+            if (bbcArticleLoaded) return;
+            
+            try {
+                // Fetch from your local HTML file
+                const htmlFileName = 'Sheet1.html';
+                console.log("Loading BBC article from local HTML file:", htmlFileName);
+                
+                const response = await fetch(htmlFileName);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const htmlText = await response.text();
+                
+                console.log("HTML data received:", htmlText.length, "characters");
+                
+                // Parse HTML table to get row 1 
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = htmlText;
+                
+                // Find the first table row with data
+                const tables = tempDiv.querySelectorAll('table');
+                console.log("Found", tables.length, "tables in HTML");
+                
+                let title = "BBC Article";
+                let content = "";
+                
+                if (tables.length > 0) {
+                    const firstTable = tables[0];
+                    const rows = firstTable.querySelectorAll('tr');
+                    console.log("Found", rows.length, "rows in first table");
+                    
+                    // Get the first data row (skip header if present)
+                    let dataRow = null;
+                    for (let i = 0; i < rows.length; i++) {
+                        const cells = rows[i].querySelectorAll('td, th');
+                        if (cells.length > 0) {
+                            // Check if this row has actual content (not just headers)
+                            const hasContent = Array.from(cells).some(cell => {
+                                const text = cell.textContent.trim();
+                                return text.length > 20 && /[\u0600-\u06FF]/.test(text);
+                            });
+                            
+                            if (hasContent) {
+                                dataRow = rows[i];
+                                console.log(`Using row ${i} as data row`);
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if (dataRow) {
+                        const cells = dataRow.querySelectorAll('td, th');
+                        console.log("Found", cells.length, "cells in data row");
+                        
+                        // Debug: show all cells
+                        Array.from(cells).forEach((cell, index) => {
+                            const cellText = cell.textContent.trim();
+                            const urduChars = (cellText.match(/[\u0600-\u06FF]/g) || []).length;
+                            console.log(`Cell ${index} (${getColumnLetter(index)}1): ${urduChars} Urdu chars, ${cellText.length} total chars`);
+                            console.log(`Cell ${index} preview: "${cellText.substring(0, 150)}..."`);
+                        });
+                        
+                        // Get H1 cell specifically (H = column 7, 0-indexed)
+                        const h1CellIndex = 7; // H is the 8th column (0-indexed = 7)
+                        
+                        if (cells[h1CellIndex]) {
+                            let h1Content = cells[h1CellIndex].textContent.trim();
+                            console.log(`H1 cell content length: ${h1Content.length}`);
+                            console.log(`H1 cell preview: "${h1Content.substring(0, 200)}..."`);
+                            
+                            // Clean image metadata from the beginning of H1 content
+                            h1Content = cleanImageMetadata(h1Content);
+                            console.log(`H1 cell after cleaning: ${h1Content.length} chars`);
+                            console.log(`H1 cleaned preview: "${h1Content.substring(0, 200)}..."`);
+                            
+                            if (h1Content.length > 50) {
+                                content = cleanLocalHTMLContent(h1Content);
+                                console.log("Using H1 cell as content");
+                            } else {
+                                console.log("H1 cell is too short, trying fallback");
+                                // Fallback: use any cell with substantial content
+                                Array.from(cells).forEach((cell, index) => {
+                                    const cellText = cell.textContent.trim();
+                                    if (cellText.length > content.length && cellText.length > 100) {
+                                        content = cleanLocalHTMLContent(cellText);
+                                        console.log(`Using cell ${index} (${getColumnLetter(index)}1) as fallback content`);
+                                    }
+                                });
+                            }
+                        } else {
+                            console.log(`H1 cell not found! Only ${cells.length} cells available`);
+                            // Fallback: use the last available cell or longest cell
+                            if (cells.length > 0) {
+                                Array.from(cells).forEach((cell, index) => {
+                                    const cellText = cell.textContent.trim();
+                                    if (cellText.length > content.length) {
+                                        content = cleanLocalHTMLContent(cellText);
+                                        console.log(`Using cell ${index} (${getColumnLetter(index)}1) as fallback content`);
+                                    }
+                                });
+                            }
+                        }
+                        
+                        // Get title from first cell (A1)
+                        if (cells[0] && cells[0].textContent.trim().length > 5 && cells[0].textContent.trim().length < 150) {
+                            title = cells[0].textContent.trim().substring(0, 50);
+                        }
+                    }
+                }
+                
+                console.log("Final extracted article:", title);
+                console.log("Final content length:", content.length);
+                console.log("Content preview:", content.substring(0, 200) + "...");
+                
+                if (content.length > 50) {
+                    // Add to stories array
+                    stories.push(content);
+                    
+                    // Add to dropdown
+                    const storySelect = document.getElementById('storySelect');
+                    const option = document.createElement('option');
+                    option.value = stories.length - 1;
+                    option.textContent = `BBC: ${title}...`;
+                    storySelect.appendChild(option);
+                    
+                    // Re-initialize pages with new story
+                    initializePages();
+                    
+                    bbcArticleLoaded = true;
+                    console.log("BBC article loaded successfully from Google Sheets");
+                } else {
+                    console.log("No usable content found in local HTML file");
+                }
+                
+            } catch (error) {
+                console.error("Failed to load BBC article from local HTML file:", error);
+                console.log("Make sure the HTML file is in the same directory as your app");
+                
+                // Show error in UI for debugging
+                alert(`Failed to load BBC article: ${error.message}`);
+            }
+        }
+
+        // Helper function to convert column index to letter (0=A, 1=B, etc.)
+        function getColumnLetter(index) {
+            return String.fromCharCode(65 + index); // 65 = ASCII 'A'
+        }
+
+        // Clean image metadata from article content
+        function cleanImageMetadata(content) {
+            // Remove image source metadata that starts articles
+            content = content.replace(/^،تصویر کا ذریعہ[^۔]*۔?\s*/g, '');
+            content = content.replace(/^Getty Images[^۔]*۔?\s*/g, '');
+            content = content.replace(/^Reuters[^۔]*۔?\s*/g, '');
+            content = content.replace(/^AFP[^۔]*۔?\s*/g, '');
+            
+            // Remove other metadata patterns
+            content = content.replace(/،تصویر کا ذریعہ[^۔]*۔?\s*/g, ' ');
+            content = content.replace(/Getty Images/g, ' ');
+            content = content.replace(/Reuters/g, ' ');
+            content = content.replace(/AFP/g, ' ');
+            
+            // Remove "End of" sections
+            content = content.replace(/End of[^۔]*۔?\s*/g, ' ');
+            
+            // Remove social media and sharing text
+            content = content.replace(/بی بی سی اردو کی خبروں[^۔]*۔?\s*/g, ' ');
+            content = content.replace(/سبسکرائب کرنے کے لیے[^۔]*۔?\s*/g, ' ');
+            content = content.replace(/مواد پر جائیں\s*/g, ' ');
+            
+            // Clean up multiple spaces
+            content = content.replace(/\s+/g, ' ').trim();
+            
+            return content;
+        }
+
+        // Clean content from local HTML file
+        function cleanLocalHTMLContent(content) {
+            // Remove extra whitespace
+            content = content.replace(/\s+/g, ' ').trim();
+            
+            // Remove any remaining HTML entities
+            content = content.replace(/&quot;/g, '"');
+            content = content.replace(/&amp;/g, '&');
+            content = content.replace(/&lt;/g, '<');
+            content = content.replace(/&gt;/g, '>');
+            content = content.replace(/&nbsp;/g, ' ');
+            
+            // Ensure proper sentence endings
+            if (!content.endsWith('۔') && !content.endsWith('!') && !content.endsWith('؟')) {
+                content += '۔';
+            }
+            
+            return content;
+        }
+
+        // Parse CSV row handling quoted fields
+        function parseCSVRow(row) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < row.length; i++) {
+                const char = row[i];
+                
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current.trim());
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            
+            result.push(current.trim());
+            return result;
+        }
+
+        // Clean content from Google Sheets
+        function cleanGoogleSheetContent(content) {
+            // Remove extra quotes that might come from CSV
+            content = content.replace(/^["']|["']$/g, '');
+            
+            // Normalize whitespace
+            content = content.replace(/\s+/g, ' ').trim();
+            
+            // Remove any remaining HTML entities or artifacts
+            content = content.replace(/&quot;/g, '"');
+            content = content.replace(/&amp;/g, '&');
+            content = content.replace(/&lt;/g, '<');
+            content = content.replace(/&gt;/g, '>');
+            
+            // Ensure proper sentence endings
+            if (!content.endsWith('۔') && !content.endsWith('!') && !content.endsWith('؟')) {
+                content += '۔';
+            }
+            
+            return content;
+        }
+
+        // Extract clean text from article HTML
+        function extractArticleText(html) {
+            // First decode any URL encoding in the HTML
+            try {
+                html = decodeURIComponent(html);
+            } catch (e) {
+                // If decoding fails, continue with original
+            }
+            
+            // Create a temporary div to parse HTML
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = html;
+            
+            console.log("Full HTML content length:", html.length);
+            console.log("Parsed DOM - total paragraphs found:", tempDiv.querySelectorAll('p').length);
+            
+            // Check if BBC is using JSON-LD structured data for the article
+            const jsonLdScripts = tempDiv.querySelectorAll('script[type="application/ld+json"]');
+            console.log("Found JSON-LD scripts:", jsonLdScripts.length);
+            
+            for (let script of jsonLdScripts) {
+                try {
+                    const jsonData = JSON.parse(script.textContent);
+                    if (jsonData.articleBody || (jsonData['@type'] === 'NewsArticle' && jsonData.text)) {
+                        const structuredText = jsonData.articleBody || jsonData.text;
+                        console.log("Found structured article text:", structuredText.length, "characters");
+                        if (structuredText.length > 500) {
+                            return structuredText;
+                        }
+                    }
+                } catch (e) {
+                    console.log("Failed to parse JSON-LD:", e.message);
+                }
+            }
+            
+            // AGGRESSIVE image and media removal first - before any content extraction
+            const mediaElements = tempDiv.querySelectorAll(`
+                img, video, audio, iframe, embed, object,
+                figure, picture, 
+                [class*="image"], [class*="photo"], [class*="video"], [class*="media"],
+                [data-component="image"], [data-component="video"], [data-component="media"],
+                .media, .image-wrapper, .video-wrapper, .photo-wrapper,
+                .caption, .photo-caption, .image-caption,
+                .credit, .photo-credit, .image-credit,
+                .copyright, .getty-image, .afp-image,
+                .share-tools, .social-share, .share-buttons,
+                .related-content, .related-links, .see-also,
+                .tags, .topic-tags, .story-tags,
+                .byline, .author-info, .dateline, .timestamp,
+                nav, header, footer, aside,
+                .advertisement, .ad, .sponsored,
+                script, style, noscript
+            `);
+            
+            console.log(`Removing ${mediaElements.length} media/unwanted elements`);
+            mediaElements.forEach(el => el.remove());
+            
+            // Try BBC-specific selectors for main content
+            let articleContent = tempDiv.querySelector('[data-component="text-block"]') ||
+                                tempDiv.querySelector('.story-body__inner') ||
+                                tempDiv.querySelector('.story-body') ||
+                                tempDiv.querySelector('.qa-story-body') ||
+                                tempDiv.querySelector('article') ||
+                                tempDiv.querySelector('.main-content') ||
+                                tempDiv.querySelector('#main-content') ||
+                                tempDiv.querySelector('[role="main"]');
+            
+            // If no main container found, collect ALL paragraphs from entire document
+            if (!articleContent) {
+                console.log("No main container found, collecting all paragraphs");
+                const allParagraphs = tempDiv.querySelectorAll('p');
+                console.log(`Found ${allParagraphs.length} total paragraphs`);
+                
+                if (allParagraphs.length > 0) {
+                    articleContent = document.createElement('div');
+                    
+                    // Filter and add paragraphs that contain actual Urdu content
+                    allParagraphs.forEach((p, index) => {
+                        const text = p.textContent.trim();
+                        
+                        // Check if paragraph contains meaningful Urdu text
+                        const hasUrduChars = /[\u0600-\u06FF]/.test(text); // Arabic/Urdu Unicode range
+                        const isLongEnough = text.length > 15;
+                        const notMetadata = !text.match(/^(Share|Published|Updated|By|Getty|AFP|Reuters|BBC)/i);
+                        const notNavigation = !text.match(/^(Home|News|Sport|Weather|Politics)/i);
+                        
+                        if (hasUrduChars && isLongEnough && notMetadata && notNavigation) {
+                            console.log(`Including paragraph ${index}: "${text.substring(0, 80)}..."`);
+                            articleContent.appendChild(p.cloneNode(true));
+                        } else {
+                            console.log(`Skipping paragraph ${index}: "${text.substring(0, 50)}..." (Urdu: ${hasUrduChars}, Long: ${isLongEnough})`);
+                        }
+                    });
+                }
+            } else {
+                console.log("Main container found, using it");
+            }
+            
+            if (articleContent) {
+                // Final cleanup of any remaining unwanted elements
+                const finalUnwanted = articleContent.querySelectorAll(`
+                    script, style, img, video, iframe, nav, footer, header, aside,
+                    .ad, .advertisement, .share, .social, .related, .tags, .metadata,
+                    [class*="share"], [class*="social"], [class*="ad"], [class*="promo"]
+                `);
+                finalUnwanted.forEach(el => el.remove());
+                
+                // Extract text while preserving paragraph structure
+                const paragraphs = articleContent.querySelectorAll('p');
+                const validParagraphs = [];
+                
+                console.log(`Processing ${paragraphs.length} paragraphs for content`);
+                
+                paragraphs.forEach((p, index) => {
+                    let text = p.textContent || p.innerText;
+                    
+                    // Decode URL encoding if present
+                    try {
+                        text = decodeURIComponent(text);
+                    } catch (e) {
+                        // If decoding fails, continue with original
+                    }
+                    
+                    // Basic cleaning while preserving structure
+                    text = text.trim();
+                    text = text.replace(/\s+/g, ' '); // Normalize whitespace but don't remove all structure
+                    
+                    // Light cleaning - only remove obvious artifacts
+                    text = text.replace(/\b(Share|Published|Updated|Getty Images|Reuters|AFP)\s*/gi, '');
+                    text = text.replace(/^\W+/, ''); // Remove leading punctuation/symbols
+                    
+                    // Check if this paragraph has meaningful Urdu content
+                    const hasUrduChars = /[\u0600-\u06FF]/.test(text);
+                    const isLongEnough = text.length > 20;
+                    const notJustMetadata = !text.match(/^(By|Published|Updated|Getty|AFP|Reuters|BBC|Share|Home|News)[\s\W]/i);
+                    
+                    if (hasUrduChars && isLongEnough && notJustMetadata && !text.includes('%D8%')) {
+                        console.log(`Including paragraph ${index}: "${text.substring(0, 100)}..."`);
+                        validParagraphs.push(text);
+                    } else {
+                        console.log(`Skipping paragraph ${index}: "${text.substring(0, 60)}..." (reasons: Urdu=${hasUrduChars}, Length=${isLongEnough}, NotMeta=${notJustMetadata})`);
+                    }
+                });
+                
+                // Join paragraphs with proper spacing to preserve structure
+                let fullText = validParagraphs.join(' ');
+                
+                // Final light cleanup
+                fullText = fullText.replace(/\s+/g, ' ').trim();
+                fullText = fullText.replace(/\s*[۔!؟]\s*[۔!؟]+/g, '۔ '); // Fix multiple punctuation
+                
+                // Don't limit word count - take the FULL article for complete learning
+                console.log(`Full article: ${validParagraphs.length} paragraphs, ${fullText.length} characters`);
+                
+                // Only ensure it ends properly
+                if (fullText && !fullText.endsWith('۔') && !fullText.endsWith('!') && !fullText.endsWith('؟')) {
+                    fullText += '۔';
+                }
+                
+                // Return full article if we have meaningful content
+                if (fullText.length > 200) {
+                    console.log(`Returning complete article with ${fullText.length} characters`);
+                    return fullText;
+                } else {
+                    console.log("Not enough content after processing");
+                    return null;
+                }
+            }
+            
+            console.log("No article content could be extracted");
+            return null;
+        }
+
+        // Split stories into pages (3 sentences per page)
+        function initializePages() {
+            pagesPerStory = stories.map(story => {
+                // Simple approach: find sentences by splitting on punctuation and keeping them intact
+                const sentences = [];
+                let currentSentence = '';
+                
+                for (let i = 0; i < story.length; i++) {
+                    currentSentence += story[i];
+                    
+                    // Check if we hit a sentence ending
+                    if (story[i] === '۔' || story[i] === '!' || story[i] === '؟') {
+                        sentences.push(currentSentence.trim());
+                        currentSentence = '';
+                        
+                        // Skip any whitespace after punctuation
+                        while (i + 1 < story.length && story[i + 1] === ' ') {
+                            i++;
+                        }
+                    }
+                }
+                
+                // Add any remaining text as a sentence
+                if (currentSentence.trim()) {
+                    sentences.push(currentSentence.trim());
+                }
+                
+                // Group sentences into pages
+                const pages = [];
+                for (let i = 0; i < sentences.length; i += 3) {
+                    const pageSentences = sentences.slice(i, i + 3);
+                    const pageText = pageSentences.join(' ');
+                    
+                    if (pageText.trim()) {
+                        pages.push(pageText);
+                    }
+                }
+                
+                return pages.length > 0 ? pages : [story];
+            });
+        }
+
+        // Load story
+        function loadStory(index) {
+            currentPage = 0;
+            isTranslated = false;
+            document.getElementById('translateToggle').textContent = 'Translate to English';
+            document.getElementById('translateToggle').classList.remove('translating');
+            loadCurrentPage(index);
+            updatePageNavigation(index);
+        }
+
+        // Load current page
+        function loadCurrentPage(storyIndex) {
+            const currentStoryPages = pagesPerStory[storyIndex];
+            const text = currentStoryPages[currentPage];
+            
+            if (!text) return;
+            
+            // Split by spaces but handle punctuation properly for RTL
+            const words = text.split(' ');
+            const html = words.map((word, i) => {
+                const cleanWord = word.replace(/[۔،؟!]/g, '');
+                const isSaved = vocabulary.some(item => item.urdu === cleanWord || item.urdu.includes(cleanWord));
+                const savedClass = isSaved ? ' saved' : '';
+                
+                // For RTL text, wrap each word (including punctuation) in a span
+                // Use Unicode RLE (Right-to-Left Embedding) and PDF (Pop Directional Formatting)
+                return `<span class="urdu-word${savedClass}" 
+                    onmousedown="handleWord('${word.replace(/'/g, "\\'")}', ${i}, event)"
+                    onmouseenter="handleWordEnter(${i}, this)"
+                    data-word-index="${i}"
+                    dir="rtl"
+                >${word}</span>`;
+            }).join(' ');
+            
+            // Ensure proper Urdu formatting
+            const textElement = document.getElementById('urduText');
+            textElement.innerHTML = html;
+            textElement.style.direction = 'rtl';
+            textElement.style.textAlign = 'right';
+            textElement.style.fontFamily = "'Noto Nastaliq Urdu', serif";
+            
+            selectedWords = [];
+            isSelecting = false;
+            updateSelectionUI();
+        }
+
+        // Update page navigation
+        function updatePageNavigation(storyIndex) {
+            const currentStoryPages = pagesPerStory[storyIndex];
+            const totalPages = currentStoryPages.length;
+            
+            document.getElementById('pageInfo').textContent = `Page ${currentPage + 1} of ${totalPages}`;
+            document.getElementById('prevPageBtn').disabled = currentPage === 0;
+            document.getElementById('nextPageBtn').disabled = currentPage === totalPages - 1;
+        }
+
+        // Previous page
+        function previousPage() {
+            if (currentPage > 0) {
+                currentPage--;
+                const storyIndex = parseInt(document.getElementById('storySelect').value);
+                loadCurrentPage(storyIndex);
+                updatePageNavigation(storyIndex);
+                
+                // Reset translation state and styling for new page
+                isTranslated = false;
+                document.getElementById('translateToggle').textContent = 'Translate to English';
+                document.getElementById('translateToggle').classList.remove('translating');
+                
+                // Reset text direction to Urdu
+                const textElement = document.getElementById('urduText');
+                textElement.style.direction = 'rtl';
+                textElement.style.textAlign = 'right';
+                textElement.style.fontFamily = "'Noto Nastaliq Urdu', serif";
+            }
+        }
+
+        // Next page
+        function nextPage() {
+            const storyIndex = parseInt(document.getElementById('storySelect').value);
+            const totalPages = pagesPerStory[storyIndex].length;
+            
+            if (currentPage < totalPages - 1) {
+                currentPage++;
+                loadCurrentPage(storyIndex);
+                updatePageNavigation(storyIndex);
+                
+                // Reset translation state and styling for new page
+                isTranslated = false;
+                document.getElementById('translateToggle').textContent = 'Translate to English';
+                document.getElementById('translateToggle').classList.remove('translating');
+                
+                // Reset text direction to Urdu
+                const textElement = document.getElementById('urduText');
+                textElement.style.direction = 'rtl';
+                textElement.style.textAlign = 'right';
+                textElement.style.fontFamily = "'Noto Nastaliq Urdu', serif";
+            }
+        }
+
+        // Toggle page translation
+        async function togglePageTranslation() {
+            const toggleBtn = document.getElementById('translateToggle');
+            const storyIndex = parseInt(document.getElementById('storySelect').value);
+            const pageKey = `${storyIndex}-${currentPage}`;
+            
+            if (toggleBtn.classList.contains('translating')) return;
+            
+            if (isTranslated) {
+                // Switch back to Urdu
+                isTranslated = false;
+                toggleBtn.textContent = 'Translate to English';
+                loadCurrentPage(storyIndex);
+            } else {
+                // Translate to English
+                toggleBtn.textContent = 'Translating...';
+                toggleBtn.classList.add('translating');
+                
+                // Check if translation is cached
+                if (translatedPages.has(pageKey)) {
+                    displayTranslatedPage(translatedPages.get(pageKey));
+                    isTranslated = true;
+                    toggleBtn.textContent = 'Show Urdu';
+                    toggleBtn.classList.remove('translating');
+                } else {
+                    // Translate the page
+                    const currentText = pagesPerStory[storyIndex][currentPage];
+                    try {
+                        const translation = await translateText(currentText);
+                        translatedPages.set(pageKey, translation);
+                        displayTranslatedPage(translation);
+                        isTranslated = true;
+                        toggleBtn.textContent = 'Show Urdu';
+                    } catch (error) {
+                        alert('Translation failed. Please try again.');
+                        toggleBtn.textContent = 'Translate to English';
+                    }
+                    toggleBtn.classList.remove('translating');
+                }
+            }
+        }
+
+        // Display translated page
+        function displayTranslatedPage(translation) {
+            const words = translation.split(' ');
+            const html = words.map((word, i) => 
+                `<span class="urdu-word" style="direction: ltr;" dir="ltr">${word}</span>`
+            ).join(' ');
+            
+            const textElement = document.getElementById('urduText');
+            textElement.innerHTML = html;
+            textElement.style.direction = 'ltr';
+            textElement.style.textAlign = 'left';
+            textElement.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        }
+
+        // Handle word click (start selection)
+        async function handleWord(word, index, event) {
+            const cleanWord = word.replace(/[۔،؟!]/g, '');
+            
+            // Clear previous selections
+            document.querySelectorAll('.urdu-word').forEach(w => {
+                w.classList.remove('active');
+                w.classList.remove('selected');
+            });
+            
+            // Start new selection
+            selectedWords = [index];
+            event.target.classList.add('selected');
+            isSelecting = true;
+            selectionStart = index;
+            
+            // Translate single word immediately
+            try {
+                // Check cache
+                if (translationCache.has(cleanWord)) {
+                    showTranslation(cleanWord, translationCache.get(cleanWord));
+                    return;
+                }
+                
+                document.getElementById('translationContent').innerHTML = 'Translating...';
+                const translation = await translateText(cleanWord);
+                translationCache.set(cleanWord, translation);
+                showTranslation(cleanWord, translation);
+            } catch (error) {
+                showTranslation(cleanWord, 'Translation error');
+            }
+        }
+
+        // Handle mouse enter for drag selection
+        function handleWordEnter(index, element) {
+            if (!isSelecting) return;
+            
+            // Clear current selection
+            document.querySelectorAll('.urdu-word').forEach(w => w.classList.remove('selected'));
+            
+            // Select range from start to current
+            const start = Math.min(selectionStart, index);
+            const end = Math.max(selectionStart, index);
+            
+            selectedWords = [];
+            const words = document.querySelectorAll('.urdu-word');
+            
+            for (let i = start; i <= end; i++) {
+                selectedWords.push(i);
+                words[i].classList.add('selected');
+            }
+            
+            // Update UI to show selection count
+            if (selectedWords.length > 1) {
+                updateSelectionUI();
+            }
+        }
+
+        // Handle mouse up (end selection)
+        function handleMouseUp() {
+            if (isSelecting && selectedWords.length > 1) {
+                // Translate the selected phrase
+                translateSelectedWords();
+            } else if (isSelecting && selectedWords.length === 1) {
+                // Single word was selected, translation already handled in handleWord
+            }
+            isSelecting = false;
+        }
+
+        // Update selection UI
+        function updateSelectionUI() {
+            const content = document.getElementById('translationContent');
+            
+            if (selectedWords.length === 0) {
+                content.innerHTML = 'Click any Urdu word to see its translation, or drag to select multiple words';
+            } else if (selectedWords.length === 1) {
+                // Single word selection - translation handled in handleWord
+                return;
+            } else {
+                content.innerHTML = `${selectedWords.length} words selected. Release mouse to translate phrase...`;
+            }
+        }
+
+        // Translate selected words as phrase
+        async function translateSelectedWords() {
+            if (selectedWords.length === 0) return;
+            
+            // Sort indices and get words
+            const sortedIndices = selectedWords.sort((a, b) => a - b);
+            const words = document.querySelectorAll('.urdu-word');
+            const phrase = sortedIndices.map(i => words[i].textContent).join(' ');
+            const cleanPhrase = phrase.replace(/[۔،؟!]/g, '');
+            
+            // Check cache
+            if (translationCache.has(cleanPhrase)) {
+                showTranslation(cleanPhrase, translationCache.get(cleanPhrase));
+                return;
+            }
+            
+            // Show loading
+            document.getElementById('translationContent').innerHTML = 'Translating phrase...';
+            
+            try {
+                const translation = await translateText(cleanPhrase);
+                translationCache.set(cleanPhrase, translation);
+                showTranslation(cleanPhrase, translation);
+            } catch (error) {
+                showTranslation(cleanPhrase, 'Translation error');
+            }
+        }
+
+        // Common translation function - uses Vercel API
+        async function translateText(text) {
+            const response = await fetch('/api/translate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ text: text })
+            });
+            
+            if (!response.ok) {
+                throw new Error(`Translation failed: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            return data.translation || 'Translation not found';
+        }
+
+        // Show translation
+        function showTranslation(word, translation) {
+            const isPhrase = word.includes(' ');
+            const buttonText = isPhrase ? 'Save Phrase' : 'Save Word';
+            
+            document.getElementById('translationContent').innerHTML = `
+                <div class="word-display">${word}</div>
+                <div class="translation-text">${translation}</div>
+                <button class="save-button" onclick="saveWord('${word.replace(/'/g, "\\'")}', '${translation.replace(/'/g, "\\'")}')">
+                    ${buttonText}
+                </button>
+            `;
+        }
+
+        // Save word
+        function saveWord(urdu, english) {
+            if (vocabulary.some(item => item.urdu === urdu)) {
+                alert('Already saved!');
+                return;
+            }
+            
+            vocabulary.push({ urdu, english });
+            updateVocabulary();
+        }
+
+        // Check which story contains a word
+        function findStoryForWord(targetWord) {
+            const currentStoryIndex = parseInt(document.getElementById('storySelect').value);
+            
+            // Check current story first
+            const currentWords = stories[currentStoryIndex].split(' ');
+            const foundInCurrent = currentWords.some(word => {
+                const cleanWord = word.replace(/[۔،؟!]/g, '');
+                return cleanWord === targetWord || 
+                       targetWord.includes(cleanWord) || 
+                       cleanWord.includes(targetWord);
+            });
+            
+            if (foundInCurrent) {
+                return { found: true, isCurrent: true, storyIndex: currentStoryIndex, storyName: document.getElementById('storySelect').options[currentStoryIndex].text };
+            }
+            
+            // Check other stories
+            for (let i = 0; i < stories.length; i++) {
+                if (i !== currentStoryIndex) {
+                    const words = stories[i].split(' ');
+                    const foundInStory = words.some(word => {
+                        const cleanWord = word.replace(/[۔،؟!]/g, '');
+                        return cleanWord === targetWord || 
+                               targetWord.includes(cleanWord) || 
+                               cleanWord.includes(targetWord);
+                    });
+                    
+                    if (foundInStory) {
+                        return { found: true, isCurrent: false, storyIndex: i, storyName: document.getElementById('storySelect').options[i].text };
+                    }
+                }
+            }
+            
+            return { found: false };
+        }
+
+        // Update vocabulary display
+        function updateVocabulary() {
+            const list = document.getElementById('vocabList');
+            const clearBtn = document.getElementById('clearButton');
+            
+            if (vocabulary.length === 0) {
+                list.innerHTML = '<div class="empty-vocab">No saved words yet</div>';
+                clearBtn.style.display = 'none';
+            } else {
+                clearBtn.style.display = 'block';
+                list.innerHTML = vocabulary.map((item, index) => {
+                    const storyInfo = findStoryForWord(item.urdu);
+                    let tooltipText;
+                    
+                    if (!storyInfo.found) {
+                        tooltipText = `"${item.urdu}" not found in any story`;
+                    } else if (storyInfo.isCurrent) {
+                        tooltipText = `Find "${item.urdu}" in current story`;
+                    } else {
+                        tooltipText = `Switch to "${storyInfo.storyName}" to find "${item.urdu}"`;
+                    }
+                    
+                    return `
+                        <div class="vocab-item">
+                            <div class="vocab-word">${item.urdu}</div>
+                            <div class="vocab-translation">${item.english}</div>
+                            <div class="vocab-actions">
+                                <div class="tooltip">
+                                    <button class="jump-button" onclick="jumpToWord('${item.urdu.replace(/'/g, "\\'")}')">
+                                        Jump to
+                                    </button>
+                                    <span class="tooltiptext">${tooltipText}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+            
+            // Update saved word indicators in the story
+            updateSavedWordIndicators();
+        }
+
+        // Update saved word indicators
+        function updateSavedWordIndicators() {
+            const words = document.querySelectorAll('.urdu-word');
+            words.forEach(wordElement => {
+                const word = wordElement.textContent;
+                const cleanWord = word.replace(/[۔،؟!]/g, '');
+                const isSaved = vocabulary.some(item => 
+                    item.urdu === cleanWord || 
+                    item.urdu.includes(cleanWord) ||
+                    cleanWord.includes(item.urdu)
+                );
+                
+                if (isSaved) {
+                    wordElement.classList.add('saved');
+                } else {
+                    wordElement.classList.remove('saved');
+                }
+            });
+        }
+
+        // Jump to word in story
+        function jumpToWord(targetWord) {
+            // First check if word exists in current story
+            const currentWords = document.querySelectorAll('.urdu-word');
+            let foundInCurrent = false;
+            
+            currentWords.forEach(wordElement => {
+                const word = wordElement.textContent;
+                const cleanWord = word.replace(/[۔،؟!]/g, '');
+                
+                if (cleanWord === targetWord || 
+                    targetWord.includes(cleanWord) || 
+                    cleanWord.includes(targetWord)) {
+                    foundInCurrent = true;
+                }
+            });
+            
+            if (foundInCurrent) {
+                // Word found in current story, just highlight it
+                highlightWordInCurrentStory(targetWord);
+            } else {
+                // Word not found, search other stories
+                findWordInOtherStories(targetWord);
+            }
+        }
+
+        // Highlight word in current story
+        function highlightWordInCurrentStory(targetWord) {
+            const words = document.querySelectorAll('.urdu-word');
+            
+            words.forEach(wordElement => {
+                const word = wordElement.textContent;
+                const cleanWord = word.replace(/[۔،؟!]/g, '');
+                
+                if (cleanWord === targetWord || 
+                    targetWord.includes(cleanWord) || 
+                    cleanWord.includes(targetWord)) {
+                    
+                    // Clear previous highlights
+                    words.forEach(w => w.classList.remove('active', 'selected'));
+                    
+                    // Highlight the found word
+                    wordElement.classList.add('active');
+                    
+                    // Scroll to the word
+                    wordElement.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
+                    
+                    // Flash effect
+                    wordElement.style.animation = 'flash 1s ease-in-out';
+                    setTimeout(() => {
+                        wordElement.style.animation = '';
+                    }, 1000);
+                    
+                    return;
+                }
+            });
+        }
+
+        // Find word in other stories
+        function findWordInOtherStories(targetWord) {
+            let foundStoryIndex = -1;
+            
+            // Search through all stories
+            stories.forEach((story, index) => {
+                if (foundStoryIndex === -1) {
+                    const words = story.split(' ');
+                    words.forEach(word => {
+                        const cleanWord = word.replace(/[۔،؟!]/g, '');
+                        if (cleanWord === targetWord || 
+                            targetWord.includes(cleanWord) || 
+                            cleanWord.includes(targetWord)) {
+                            foundStoryIndex = index;
+                        }
+                    });
+                }
+            });
+            
+            if (foundStoryIndex !== -1) {
+                // Get story names from the select options
+                const storySelect = document.getElementById('storySelect');
+                const storyName = storySelect.options[foundStoryIndex].text;
+                
+                const confirmMessage = `"${targetWord}" was found in "${storyName}". Switch to that story?`;
+                
+                if (confirm(confirmMessage)) {
+                    // Switch to the story
+                    storySelect.value = foundStoryIndex;
+                    loadStory(foundStoryIndex);
+                    
+                    // Wait for story to load, then highlight the word
+                    setTimeout(() => {
+                        highlightWordInCurrentStory(targetWord);
+                    }, 100);
+                }
+            } else {
+                alert(`"${targetWord}" not found in any story.`);
+            }
+        }
+
+        // Clear vocabulary
+        function clearVocabulary() {
+            if (confirm('Clear all vocabulary?')) {
+                vocabulary = [];
+                updateVocabulary();
+            }
+        }
+
+        // Initialize
+        initializePages();
+        loadStory(0);
+        
+        // Load BBC article on startup
+        loadBBCArticle();
+        
+        // Add global mouse up event listener for drag selection
+        document.addEventListener('mouseup', handleMouseUp);
+    </script>
+</body>
+</html>
