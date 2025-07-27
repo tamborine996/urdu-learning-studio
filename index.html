@@ -369,6 +369,64 @@
             .story-panel {
                 border-right: none;
                 border-bottom: 1px solid #e5e7eb;
+                padding: 20px;
+            }
+            
+            .story-controls {
+                flex-direction: column;
+                gap: 15px;
+                align-items: stretch;
+            }
+            
+            .page-navigation {
+                justify-content: center;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            
+            .translation-toggle {
+                justify-content: center;
+            }
+            
+            .toggle-button {
+                padding: 12px 20px;
+                font-size: 16px;
+                white-space: nowrap;
+                min-width: 160px;
+            }
+            
+            .page-button {
+                padding: 10px 16px;
+                font-size: 16px;
+                min-width: 80px;
+            }
+            
+            .page-info {
+                min-width: 100px;
+                font-size: 16px;
+            }
+            
+            .container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .urdu-text {
+                font-size: 20px;
+                line-height: 1.8;
+                padding: 20px;
+            }
+            
+            .sidebar {
+                padding: 20px;
             }
         }
     </style>
@@ -608,17 +666,20 @@
 
         // Clean image metadata from article content
         function cleanImageMetadata(content) {
-            // Remove image source metadata that starts articles
-            content = content.replace(/^،تصویر کا ذریعہ[^۔]*۔?\s*/g, '');
-            content = content.replace(/^Getty Images[^۔]*۔?\s*/g, '');
-            content = content.replace(/^Reuters[^۔]*۔?\s*/g, '');
-            content = content.replace(/^AFP[^۔]*۔?\s*/g, '');
+            // Remove image source metadata that starts articles - more aggressive
+            content = content.replace(/^،تصویر کا ذریعہ.*?(?=پاکستان|انڈیا|امریکہ|[آابپتثج])/s, '');
+            content = content.replace(/^Getty Images.*?(?=پاکستان|انڈیا|امریکہ|[آابپتثج])/s, '');
+            content = content.replace(/^Reuters.*?(?=پاکستان|انڈیا|امریکہ|[آابپتثج])/s, '');
+            content = content.replace(/^AFP.*?(?=پاکستان|انڈیا|امریکہ|[آابپتثج])/s, '');
             
-            // Remove other metadata patterns
+            // Remove other metadata patterns throughout content
             content = content.replace(/،تصویر کا ذریعہ[^۔]*۔?\s*/g, ' ');
-            content = content.replace(/Getty Images/g, ' ');
-            content = content.replace(/Reuters/g, ' ');
-            content = content.replace(/AFP/g, ' ');
+            content = content.replace(/Getty Images[^۔]*۔?\s*/g, ' ');
+            content = content.replace(/Reuters[^۔]*۔?\s*/g, ' ');
+            content = content.replace(/AFP[^۔]*۔?\s*/g, ' ');
+            content = content.replace(/Image[^۔]*۔?\s*/g, ' ');
+            content = content.replace(/تصویر[^۔]*۔?\s*/g, ' ');
+            content = content.replace(/ذریعہ[^۔]*۔?\s*/g, ' ');
             
             // Remove "End of" sections
             content = content.replace(/End of[^۔]*۔?\s*/g, ' ');
@@ -628,7 +689,10 @@
             content = content.replace(/سبسکرائب کرنے کے لیے[^۔]*۔?\s*/g, ' ');
             content = content.replace(/مواد پر جائیں\s*/g, ' ');
             
-            // Clean up multiple spaces
+            // Remove metadata at the beginning that starts with image references
+            content = content.replace(/^[^آابپتثجحخدذرزسشصضطظعغفقکگلمنوہیے]*([آابپتثجحخدذرزسشصضطظعغفقکگلمنوہیے])/, '$1');
+            
+            // Clean up multiple spaces and line breaks
             content = content.replace(/\s+/g, ' ').trim();
             
             return content;
