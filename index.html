@@ -73,7 +73,7 @@
         .urdu-text {
             font-family: 'Noto Nastaliq Urdu', serif;
             font-size: 18px;
-            line-height: 1.6;
+            line-height: 1.8;
             text-align: right;
             direction: rtl;
             background: #f9fafb;
@@ -481,7 +481,7 @@
             
             .urdu-text {
                 font-size: 16px;
-                line-height: 1.5;
+                line-height: 1.7;
                 padding: 15px;
             }
             
@@ -1077,6 +1077,9 @@
                 return `<span class="urdu-word${savedClass}" 
                     onmousedown="handleWord('${word.replace(/'/g, "\\'")}', ${i}, event)"
                     onmouseenter="handleWordEnter(${i}, this)"
+                    ontouchstart="handleTouchStart('${word.replace(/'/g, "\\'")}', ${i}, event)"
+                    ontouchmove="handleTouchMove(${i}, event)"
+                    ontouchend="handleTouchEnd(event)"
                     data-word-index="${i}"
                     dir="rtl"
                 >${word}</span>`;
@@ -1630,16 +1633,119 @@
         // Add global mouse up event listener for drag selection
         document.addEventListener('mouseup', handleMouseUp);
         
-        // Add click listener to hide popup when clicking elsewhere
+        // Add click listener to hide popup and clear highlights when clicking elsewhere
         document.addEventListener('click', function(e) {
             const popup = document.getElementById('translationPopup');
             const isPopup = e.target.closest('#translationPopup');
             const isUrduWord = e.target.classList.contains('urdu-word');
             
-            if (!isPopup && !isUrduWord && popup.classList.contains('show')) {
-                hidePopup();
+            if (!isPopup && !isUrduWord) {
+                // Hide popup if showing
+                if (popup.classList.contains('show')) {
+                    hidePopup();
+                }
+                
+                // Clear all word highlights
+                clearWordHighlights();
             }
         });
+        
+        // Function to clear all word highlights
+        function clearWordHighlights() {
+            document.querySelectorAll('.urdu-word').forEach(word => {
+                word.classList.remove('active', 'selected');
+            });
+            selectedWords = [];
+            isSelecting = false;
+        }
+        
+        // Touch event handlers for mobile multi-word selection
+        let touchStartTime = 0;
+        let lastTouchTarget = null;
+        
+        function handleTouchStart(word, index, event) {
+            event.preventDefault(); // Prevent scrolling
+            touchStartTime = Date.now();
+            lastTouchTarget = event.target;
+            
+            // Clear previous selections
+            document.querySelectorAll('.urdu-word').forEach(w => {
+                w.classList.remove('active');
+                w.classList.remove('selected');
+            });
+            
+            // Start new selection
+            selectedWords = [index];
+            event.target.classList.add('selected');
+            isSelecting = true;
+            selectionStart = index;
+        }
+        
+        function handleTouchMove(index, event) {
+            if (!isSelecting) return;
+            
+            event.preventDefault(); // Prevent scrolling
+            
+            // Find the element under the touch point
+            const touch = event.touches[0];
+            const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+            
+            if (elementBelow && elementBelow.classList.contains('urdu-word')) {
+                const currentIndex = parseInt(elementBelow.getAttribute('data-word-index'));
+                
+                // Clear current selection
+                document.querySelectorAll('.urdu-word').forEach(w => w.classList.remove('selected'));
+                
+                // Select range from start to current
+                const start = Math.min(selectionStart, currentIndex);
+                const end = Math.max(selectionStart, currentIndex);
+                
+                selectedWords = [];
+                const words = document.querySelectorAll('.urdu-word');
+                
+                for (let i = start; i <= end; i++) {
+                    selectedWords.push(i);
+                    words[i].classList.add('selected');
+                }
+                
+                // Update UI to show selection count
+                if (selectedWords.length > 1) {
+                    updateSelectionUI();
+                }
+            }
+        }
+        
+        async function handleTouchEnd(event) {
+            const touchDuration = Date.now() - touchStartTime;
+            
+            if (isSelecting && selectedWords.length > 1) {
+                // Multi-word selection - translate phrase
+                translateSelectedWords();
+            } else if (isSelecting && selectedWords.length === 1 && touchDuration < 500) {
+                // Single word tap - translate immediately
+                const index = selectedWords[0];
+                const words = document.querySelectorAll('.urdu-word');
+                const word = words[index].textContent;
+                const cleanWord = word.replace(/[۔،؟!]/g, '');
+                
+                try {
+                    // Check cache
+                    if (translationCache.has(cleanWord)) {
+                        showTranslation(cleanWord, translationCache.get(cleanWord), words[index]);
+                        return;
+                    }
+                    
+                    document.getElementById('translationContent').innerHTML = 'Translating...';
+                    const translation = await translateText(cleanWord);
+                    translationCache.set(cleanWord, translation);
+                    showTranslation(cleanWord, translation, words[index]);
+                } catch (error) {
+                    showTranslation(cleanWord, 'Translation error', words[index]);
+                }
+            }
+            
+            isSelecting = false;
+        }
     </script>
 </body>
 </html>
